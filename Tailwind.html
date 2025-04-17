@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather App</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.8.0/dist/leaflet.css"
+    integrity="sha512-hoalWLoI8r4UszCkZ5kL8vayOGVae1oxXe/2A4AO6J9+580uKHDO3JdHb7NzwwzK5xr/Fs0W40kiNHxM9vyTtQ=="
+    crossorigin=""/>
+</head>
+<body>
+    <header class="bg-gradient-to-r from-indigo-500 to-pink-500 text-white p-4 text-center">
+        <h1 class="text-3xl font-bold">Weather App</h1>
+    </header>
+    <main class="container mx-auto p-4 mt-4 flex flex-col gap-4">
+        <section class="bg-white p-4 shadow-md rounded">
+            <h2 class="text-2xl font-bold mb-4 text-indigo-500">Your Location</h2>
+            <p class="text-lg" id="location"></p>
+            <div id="map" style="height: 400px; width: 100%"></div>
+        </section>
+        <section class="bg-gray-100 p-4 rounded shadow-md">
+            <h2 class="text-2xl font-bold mb-4 text-pink-500">Current Weather</h2>
+            <p class="text-lg" id="weather-description"></p>
+            <p class="text-lg" id="weather-temperature"></p>
+            <button class="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded" id="get-weather-btn">Get Weather</button>
+        </section>
+        <section class="bg-white p-4 shadow-md rounded mt-4">
+            <h2 class="text-2xl font-bold mb-4 text-indigo-500">More Information</h2>
+            <button id="modal-btn" class="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded">Show Modal</button>
+        </section>
+    </main>
+    <footer class="bg-gradient-to-r from-indigo-500 to-pink-500 text-white p-4 text-center mt-4">
+        <p>&copy; 2023 Weather App</p>
+    </footer>
+    <div id="modal" class="fixed top-0 left-0 w-full h-full bg-black bg-opacity-50 flex justify-center items-center hidden">
+        <div class="bg-white p-4 shadow-md rounded">
+            <h2 class="text-2xl font-bold mb-4 text-pink-500">Modal Title</h2>
+            <p class="text-lg" id="modal-text"></p>
+            <button id="close-modal" class="bg-orange-500 hover:bg-orange-700 text-white font-bold py-2 px-4 rounded">Close</button>
+        </div>
+    </div>
+    <script src="https://unpkg.com/leaflet@1.8.0/dist/leaflet.js"
+    integrity="sha512-BB3hKbKWOc9Ez/TAwyWxNXeoV9c1v6FIeYiBieIWkpLjauysF18NzgR1MBNBXf8/KABdlkX68nAhlwcDFLGPCQ=="
+    crossorigin=""></script>
+    <script>
+        const locationElement = document.getElementById('location');
+        const mapElement = document.getElementById('map');
+        const getWeatherBtn = document.getElementById('get-weather-btn');
+        const weatherDescription = document.getElementById('weather-description');
+        const weatherTemperature = document.getElementById('weather-temperature');
+        const modalBtn = document.getElementById('modal-btn');
+        const modal = document.getElementById('modal');
+        const closeModalBtn = document.getElementById('close-modal');
+        const modalText = document.getElementById('modal-text');
+
+        navigator.geolocation.getCurrentPosition(position => {
+            const latitude = position.coords.latitude;
+            const longitude = position.coords.longitude;
+            locationElement.textContent = `Latitude: ${latitude}, Longitude: ${longitude}`;
+            const map = L.map(mapElement).setView([latitude, longitude], 13);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/">OpenStreetMap</a>',
+                subdomains: ['a', 'b', 'c']
+            }).addTo(map);
+            L.marker([latitude, longitude]).addTo(map);
+        });
+
+        getWeatherBtn.addEventListener('click', () => {
+            navigator.geolocation.getCurrentPosition(position => {
+                const latitude = position.coords.latitude;
+                const longitude = position.coords.longitude;
+                fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=YOUR_API_KEY&units=metric`)
+                .then(response => response.json())
+                .then(data => {
+                    weatherDescription.textContent = `The weather in ${data.name} is ${data.weather[0].description}`;
+                    weatherTemperature.textContent = `The temperature is ${data.main.temp}°C`;
+                })
+                .catch(error => console.error(error));
+            });
+        });
+
+        modalBtn.addEventListener('click', () => {
+            modal.classList.remove('hidden');
+            navigator.geolocation.getCurrentPosition(position => {
+                const latitude = position.coords.latitude;
+                const longitude = position.coords.longitude;
+                fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=YOUR_API_KEY&units=metric`)
+                .then(response => response.json())
+                .then(data => {
+                    modalText.textContent = `The humidity in ${data.name} is ${data.main.humidity}%`;
+                })
+                .catch(error => console.error(error));
+            });
+        });
+
+        closeModalBtn.addEventListener('click', () => {
+            modal.classList.add('hidden');
+        });
+    </script>
+</body>
+</html>
